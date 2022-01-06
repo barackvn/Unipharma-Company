@@ -26,8 +26,8 @@ class MyfatooraController(http.Controller):
     @http.route('/payment/myfatoora/return', type='http', auth="public", csrf=False, )
     def myfatoora_dpn(self, **post):
         """ Myfatoora DPN """
-        provider = request.env['payment.acquirer'].search([('provider', '=', 'myfatoora')])
-        token = provider.token
+        provider = request.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
+        token = provider.sudo().token
         if provider.state == 'test':
             baseURL = "https://apitest.myfatoorah.com"
         else:
@@ -53,7 +53,17 @@ class MyfatooraController(http.Controller):
 
     @http.route('/shop/myfatoora/payment/', type='http', auth="public", methods=['POST'], csrf=False)
     def _payment_myfatoora(self, **kw):
-        initiate_payment = request.env['payment.acquirer'].initiate_payment()
+        _logger.info(kw.get('amount'))
+        initiate_payment = request.env['payment.acquirer'].initiate_payment(kw.get('Environment'))
+        if initiate_payment:
+            if initiate_payment.get('ValidationErrors'):
+                return request.render("payment_myfatoora.initiate_payment",
+                                      {"error": initiate_payment.get('ValidationErrors')[0].get('Error'),
+                                       })
+        else:
+            return request.render("payment_myfatoora.wrong_configuration",
+                                  )
+
         payment_methods = initiate_payment['Data']['PaymentMethods']
         return request.render("payment_myfatoora.myfatoora_card",
                               {'CustomerName': kw.get("CustomerName"),
@@ -76,9 +86,9 @@ class MyfatooraController(http.Controller):
 
                                })
 
-    @http.route(['/myfatoora/process'], type='http', auth="user", csrf=False)
+    @http.route(['/myfatoora/process'], type='http', auth="public", csrf=False)
     def payment_process(self, **post):
-        initiate_payment = request.env['payment.acquirer'].initiate_payment()
+        initiate_payment = request.env['payment.acquirer'].initiate_payment(post.get('Environment'))
         payment_methods = initiate_payment['Data']['PaymentMethods']
         DisplayCurrencyIso = ''
         for method in payment_methods:
@@ -88,25 +98,33 @@ class MyfatooraController(http.Controller):
         initiate_payment_currency_id = request.env['res.currency'].search(
             [('name', '=', DisplayCurrencyIso)])
         if not initiate_payment_currency_id:
-            raise UserError(
-                _("Currency Supported by the Payment Method is not activated. Please activate Currency %s") % DisplayCurrencyIso)
+            return request.render("payment_myfatoora.error_page_currency", {"Currency": DisplayCurrencyIso,
+                                                                            })
+            # raise UserError(
+            #     _("Currency Supported by the Payment Method is not activated. Please activate Currency %s") % DisplayCurrencyIso)
         customer = request.env['res.partner'].search([('name', '=', post.get('CustomerName'))])
-        amount = 0
         if currency_id.id != initiate_payment_currency_id.id:
+            if customer.company_id:
+                company = customer.company_id
+            else:
+                company = request.env.company
+
             amount = currency_id._convert(float(post.get('InvoiceValue')), initiate_payment_currency_id,
-                                          customer.company_id,
+                                          company,
                                           date.today())
+        else:
+            amount = float(post.get('InvoiceValue'))
 
         if post.get('Environment') == 'test':
             baseURL = "https://apitest.myfatoorah.com"
         else:
             baseURL = "https://api.myfatoorah.com"
-        provider = request.env['payment.acquirer'].search([('provider', '=', 'myfatoora')])
-        token = provider.token
+        provider = request.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
+        token = provider.sudo().token
         url = baseURL + "/v2/ExecutePayment"
         payload = {"PaymentMethodId": post['PaymentMethodId'],
                    "CustomerName": post['CustomerName'],
-                   "MobileCountryCode": +965,
+                   "MobileCountryCode": '',
                    "CustomerMobile": post['CustomerMobile'],
                    "CustomerEmail": post['CustomerEmail'],
                    "InvoiceValue": amount,
@@ -132,8 +150,11 @@ class MyfatooraController(http.Controller):
             if response.get('ValidationErrors'):
                 ValidationErrors = response['ValidationErrors']
                 for error in ValidationErrors:
-                    raise UserError(
-                        _(error.get('Error')))
+                    return request.render("payment_myfatoora.error_page_currency_validation",
+                                          {"Error": error.get('Error'),
+                                           })
+                    # raise UserError(
+                    #     _(error.get('Error')))
             # self.GetPaymentStatus(baseURL, response['Data']['InvoiceId'])
 
             return werkzeug.utils.redirect(response['Data']['PaymentURL'])
@@ -143,8 +164,8 @@ class MyfatooraController(http.Controller):
     @http.route('/payment/myfatoorah/error_url', type='http', auth="public", csrf=False
                 )
     def myfatoora_error_url(self, **post):
-        provider = request.env['payment.acquirer'].search([('provider', '=', 'myfatoora')])
-        token = provider.token
+        provider = request.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
+        token = provider.sudo().token
         if provider.state == 'test':
             baseURL = "https://apitest.myfatoorah.com"
         else:
@@ -170,6 +191,6 @@ class MyfatooraController(http.Controller):
         return request.render("payment_myfatoora.error_page", {"TransactionStatus": transaction_status,
                                                                "Error": error})
 
-    @http.route(['/myfatoora/return/shop'], type='http', auth="user", csrf=False)
+    @http.route(['/myfatoora/return/shop'], type='http', auth="public", csrf=False)
     def return_shop(self):
         return werkzeug.utils.redirect('/shop')

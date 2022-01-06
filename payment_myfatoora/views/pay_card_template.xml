@@ -71,7 +71,6 @@
                             </h1>
                             <form class="" action="/myfatoora/process" method="post"
                                   enctype="multipart/form-data">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <div class="row">
                                     <dv class="col-md-4 mt-4">
                                         <labal>CustomerName</labal>

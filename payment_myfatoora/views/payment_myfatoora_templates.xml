@@ -3,7 +3,6 @@
     <data>
         <template id="myfatoora_form">
             <form t-att-action="api_url" method="post">
-                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
             <div>
                 <input type="hidden" name="data_set" t-att-data-action-url="tx_url" data-remove-me=""/>
                 <input type="hidden" name="InvoiceValue" t-att-value="InvoiceValue"/>

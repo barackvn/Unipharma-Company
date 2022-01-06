@@ -59,6 +59,7 @@ class AcquirerMyFatoora(models.Model):
         partner = self.env['res.partner'].browse(values.get('partner_id'))
         base_url = self.get_base_url()
         myfatoora_tx_values = dict(values)
+        _logger.info(values.get('amount'))
         myfatoora_tx_values.update({
             "InvoiceValue": values.get('amount'),
             "PaymentMethodId": 2,
@@ -91,19 +92,27 @@ class AcquirerMyFatoora(models.Model):
         environment = 'prod' if self.state == 'enabled' else 'test'
         return self._get_myfatoora_urls(environment)['myfatoora_form_url']
 
-    def initiate_payment(self):
-        baseURL = "https://apitest.myfatoorah.com"
-        provider = self.env['payment.acquirer'].search([('provider', '=', 'myfatoora')])
-        token = provider.token
+    def initiate_payment(self, state=False):
+        if state:
+            baseURL = "https://apitest.myfatoorah.com" if state == 'test' else "https://api.myfatoorah.com"
+        else:
+            baseURL = "https://apitest.myfatoorah.com"
+        provider = self.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
+        token = provider.sudo().token
         url = baseURL + "/v2/InitiatePayment"
-        payload = "{\"InvoiceAmount\":100,\"CurrencyIso\":\"KWD\"}"
+        payload = {
+            "InvoiceAmount": 1,
+            "CurrencyIso": self.env.company.currency_id.name
+        }
         try:
             headers = {'Content-Type': "application/json", 'Authorization': "bearer " + token}
-            response = requests.request("POST", url, data=payload, headers=headers)
-            print("response",response)
+            response = requests.request("POST", url, data=str(payload), headers=headers)
         except UserError as e:
             raise UserError(_(e))
-        return json.loads(response.text)
+        if response:
+            return json.loads(response.text)
+        else:
+            return None
 
     def _get_default_payment_method_id(self):
         self.ensure_one()
