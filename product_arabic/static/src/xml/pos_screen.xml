@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="OrderLinesReceipt" t-inherit="point_of_sale.OrderLinesReceipt" t-inherit-mode="extension" owl="1">
+        <xpath expr="//t[@t-esc='line.product_name_wrapped[0]']"  position="after">
+
+            <div>
+                <t t-if="line.product_name_arabic">
+                    <t t-esc='line.product_name_arabic'/>
+                </t>
+           </div>
+
+        </xpath>
+    </t>
+
+    <t t-name="ProductItem" t-inherit="point_of_sale.ProductItem" t-inherit-mode="extension" owl="1">
+        <xpath expr="//t[@t-esc='props.product.display_name']"  position="after">
+
+             <t t-if="props.product.product_arabic">
+                <br/>
+                <t t-esc="props.product.product_arabic"/>
+            </t>
+
+        </xpath>
+    </t>
+
+
+</templates>
