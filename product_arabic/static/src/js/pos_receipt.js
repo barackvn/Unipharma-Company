@@ -12,7 +12,6 @@ var _super_orderline = models.Orderline.prototype;
     export_for_printing: function() {
         var line = _super_orderline.export_for_printing.apply(this,arguments);
         line.product_name_arabic = this.get_product().product_arabic;
-        console.log(line)
         return line;
     },
 

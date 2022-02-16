@@ -22,7 +22,7 @@
 
 {
     'name': 'Arabic product name in POS Receipt',
-    'version': '15.0.1.0.1',
+    'version': '15.0.1.0.2',
     'summary': """Generates Arabic product names in POS receipts""",
     'description': """This module enables user to print the product names in Arabic language in POS receipts""",
     'author': "Cybrosys Techno Solutions",

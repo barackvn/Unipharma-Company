@@ -2,14 +2,19 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="OrderLinesReceipt" t-inherit="point_of_sale.OrderLinesReceipt" t-inherit-mode="extension" owl="1">
-        <xpath expr="//t[@t-esc='line.product_name_wrapped[0]']"  position="after">
-
+        <xpath expr="//WrappedProductNameLines" position="after">
             <div>
                 <t t-if="line.product_name_arabic">
-                    <t t-esc='line.product_name_arabic'/>
+                    <t t-esc="line.product_name_arabic"/>
                 </t>
-           </div>
-
+            </div>
+        </xpath>
+        <xpath expr="//t[@t-else='']/div" position="after">
+            <div>
+                <t t-if="line.product_name_arabic">
+                    <t t-esc="line.product_name_arabic"/>
+                </t>
+            </div>
         </xpath>
     </t>
 
