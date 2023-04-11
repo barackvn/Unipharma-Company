@@ -33,8 +33,11 @@ class MyfatooraController(http.Controller):
         else:
             baseURL = "https://api.myfatoorah.com"
         try:
-            headers = {'Content-Type': "application/json", 'Authorization': "bearer " + token}
-            url = baseURL + "/v2/GetPaymentStatus"
+            headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"bearer {token}",
+            }
+            url = f"{baseURL}/v2/GetPaymentStatus"
             payload = {
                 "Key": post['paymentId'],
                 "KeyType": "PaymentId"
@@ -55,15 +58,14 @@ class MyfatooraController(http.Controller):
     def _payment_myfatoora(self, **kw):
         _logger.info(kw.get('amount'))
         initiate_payment = request.env['payment.acquirer'].initiate_payment(kw.get('Environment'))
-        if initiate_payment:
-            if initiate_payment.get('ValidationErrors'):
-                return request.render("payment_myfatoora.initiate_payment",
-                                      {"error": initiate_payment.get('ValidationErrors')[0].get('Error'),
-                                       })
-        else:
+        if not initiate_payment:
             return request.render("payment_myfatoora.wrong_configuration",
                                   )
 
+        if initiate_payment.get('ValidationErrors'):
+            return request.render("payment_myfatoora.initiate_payment",
+                                  {"error": initiate_payment.get('ValidationErrors')[0].get('Error'),
+                                   })
         payment_methods = initiate_payment['Data']['PaymentMethods']
         return request.render("payment_myfatoora.myfatoora_card",
                               {'CustomerName': kw.get("CustomerName"),
@@ -104,11 +106,7 @@ class MyfatooraController(http.Controller):
             #     _("Currency Supported by the Payment Method is not activated. Please activate Currency %s") % DisplayCurrencyIso)
         customer = request.env['res.partner'].search([('name', '=', post.get('CustomerName'))])
         if currency_id.id != initiate_payment_currency_id.id:
-            if customer.company_id:
-                company = customer.company_id
-            else:
-                company = request.env.company
-
+            company = customer.company_id or request.env.company
             amount = currency_id._convert(float(post.get('InvoiceValue')), initiate_payment_currency_id,
                                           company,
                                           date.today())
@@ -121,7 +119,7 @@ class MyfatooraController(http.Controller):
             baseURL = "https://api.myfatoorah.com"
         provider = request.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
         token = provider.sudo().token
-        url = baseURL + "/v2/ExecutePayment"
+        url = f"{baseURL}/v2/ExecutePayment"
         payload = {"PaymentMethodId": post['PaymentMethodId'],
                    "CustomerName": post['CustomerName'],
                    "MobileCountryCode": '',
@@ -144,7 +142,10 @@ class MyfatooraController(http.Controller):
                                        "AddressInstructions": ""}}
         # "InvoiceItems": [{"ItemName": "Product 01", "Quantity": 1, "UnitPrice": post['InvoiceValue']}]}
         try:
-            headers = {'Content-Type': "application/json", 'Authorization': "bearer " + token}
+            headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"bearer {token}",
+            }
             response = requests.request("POST", url, data=str(payload), headers=headers)
             response = json.loads(response.text)
             if response.get('ValidationErrors'):
@@ -171,8 +172,11 @@ class MyfatooraController(http.Controller):
         else:
             baseURL = "https://api.myfatoorah.com"
         try:
-            headers = {'Content-Type': "application/json", 'Authorization': "bearer " + token}
-            url = baseURL + "/v2/GetPaymentStatus"
+            headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"bearer {token}",
+            }
+            url = f"{baseURL}/v2/GetPaymentStatus"
             payload = {
                 "Key": post['paymentId'],
                 "KeyType": "PaymentId"

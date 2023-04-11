@@ -18,12 +18,18 @@ class BarcodeStockLabelsWiz(models.TransientModel):
         stock_picking_ids = self.env['stock.picking'].browse(active_ids)
         barcode_order_lines = []
         for order in stock_picking_ids:
-            for line in order.move_ids_without_package:
-                barcode_order_lines.append((0,0, {
-                    'label_id' : self.id,
-                    'product_id' : line.product_id.id, 
-                    'qty' : line.product_uom_qty or 1,
-                }))
+            barcode_order_lines.extend(
+                (
+                    0,
+                    0,
+                    {
+                        'label_id': self.id,
+                        'product_id': line.product_id.id,
+                        'qty': line.product_uom_qty or 1,
+                    },
+                )
+                for line in order.move_ids_without_package
+            )
         res.update({
             'product_barcode_ids': barcode_order_lines
         })

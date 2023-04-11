@@ -16,13 +16,18 @@ class BarcodeProductLabelsTempWiz(models.TransientModel):
         res = super(BarcodeProductLabelsTempWiz, self).default_get(fields)
         active_ids = self._context.get('active_ids')
         product_ids = self.env['product.template'].browse(active_ids)
-        barcode_lines = []
-        for product in product_ids:
-            barcode_lines.append((0,0, {
-                'label_id' : self.id,
-                'product_id' : product.id, 
-                'qty' : 1,
-            }))
+        barcode_lines = [
+            (
+                0,
+                0,
+                {
+                    'label_id': self.id,
+                    'product_id': product.id,
+                    'qty': 1,
+                },
+            )
+            for product in product_ids
+        ]
         res.update({
             'product_barcode_ids': barcode_lines
         })

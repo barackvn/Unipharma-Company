@@ -17,9 +17,9 @@ class ReceiptDesign(models.Model):
 
     @api.model
     def _create_receipt_design_1(self):
-        record_data = {}
-        record_data['name'] = "Receipt Design 1"
-        record_data['receipt_design'] = """ 
+        record_data = {
+            'name': "Receipt Design 1",
+            'receipt_design': """ 
         <div class="pos-receipt">
             <div style="font-size: 80%; text-align:center;">
                 <div><span t-esc='receipt.date.localestring'/>  <span t-esc='receipt.name'/></div>
@@ -186,7 +186,8 @@ class ReceiptDesign(models.Model):
             <div style="text-align:center;">
                 Thank You. Please Visit Again !!
             </div>
-        </div>"""
+        </div>""",
+        }
         record_id = self.create(record_data)
         pos_config_id = self.env.ref('point_of_sale.pos_config_main')
         if record_id and pos_config_id:
@@ -195,9 +196,9 @@ class ReceiptDesign(models.Model):
 
     @api.model
     def _create_receipt_design_2(self):
-        record_data = {}
-        record_data['name'] = "Receipt Design 2"
-        record_data['receipt_design'] = """ 
+        record_data = {
+            'name': "Receipt Design 2",
+            'receipt_design': """ 
         <div class="pos-receipt" style="font-family: monospace;">
             <div class="pos-center-align" style="font-size: 12px;">
                 <t t-if="order.formatted_validation_date">
@@ -332,14 +333,15 @@ class ReceiptDesign(models.Model):
                 <br/>
                 Thank You. Please Visit Again !!
             </div>
-        </div>"""
+        </div>""",
+        }
         self.create(record_data)
 
     @api.model
     def _create_receipt_design_3(self):
-        record_data = {}
-        record_data['name'] = "Receipt Design 3"
-        record_data['receipt_design'] = """ 
+        record_data = {
+            'name': "Receipt Design 3",
+            'receipt_design': """ 
         <div class="pos-receipt">
             <t t-esc="widget.pos.company.name"/><br />
             <div style="font-size:13px">
@@ -482,14 +484,15 @@ class ReceiptDesign(models.Model):
             <div>
                 Thank You. Please Visit Again !!
             </div>
-        </div>"""
+        </div>""",
+        }
         self.create(record_data)
 
     @api.model
     def _create_receipt_design_4(self):
-        record_data = {}
-        record_data['name'] = "Receipt Design 4"
-        record_data['receipt_design'] = """
+        record_data = {
+            'name': "Receipt Design 4",
+            'receipt_design': """
         <div class="pos-receipt" style="font-family: 'Inconsolata';">
             <div class="pos-receipt-order-data" style="font-size: 14px;">
                 <t t-if="order.formatted_validation_date">
@@ -602,5 +605,6 @@ class ReceiptDesign(models.Model):
                     <t t-esc="receipt.footer" />
                 </div>
             </t>
-        </div>"""
+        </div>""",
+        }
         self.create(record_data)

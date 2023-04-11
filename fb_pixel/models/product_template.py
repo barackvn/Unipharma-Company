@@ -13,8 +13,7 @@ class ProductTemplate(models.Model):
     def _get_combination_info(self, combination=False, product_id=False, add_qty=1, pricelist=False, parent_combination=False, only_template=False):
         res = super(ProductTemplate, self)._get_combination_info(
             combination, product_id, add_qty, pricelist, parent_combination, only_template)
-        product_id = res and res.get('product_id', 0)
-        if product_id:
+        if product_id := res and res.get('product_id', 0):
             product = self.env['product.product'].browse(int(product_id))
             if product.exists():
                 res.update(default_code=product.default_code or product.id)

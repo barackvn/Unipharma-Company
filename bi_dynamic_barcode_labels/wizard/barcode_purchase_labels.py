@@ -18,12 +18,18 @@ class BarcodePurchaseLabelsWiz(models.TransientModel):
         purchase_order_ids = self.env['purchase.order'].browse(active_ids)
         barcode_order_lines = []
         for order in purchase_order_ids:
-            for line in order.order_line:
-                barcode_order_lines.append((0,0, {
-                    'label_id' : self.id,
-                    'product_id' : line.product_id.id, 
-                    'qty' : line.product_qty or 1,
-                }))
+            barcode_order_lines.extend(
+                (
+                    0,
+                    0,
+                    {
+                        'label_id': self.id,
+                        'product_id': line.product_id.id,
+                        'qty': line.product_qty or 1,
+                    },
+                )
+                for line in order.order_line
+            )
         res.update({
             'product_barcode_ids': barcode_order_lines
         })

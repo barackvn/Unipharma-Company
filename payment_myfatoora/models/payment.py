@@ -30,7 +30,7 @@ class AcquirerMyFatoora(models.Model):
     def _get_authorize_urls(self):
         base_url = self.get_base_url()
         """ MyFatoora URLS """
-        return base_url + 'shop/myfatoora/payment/'
+        return f'{base_url}shop/myfatoora/payment/'
 
     def _get_feature_support(self):
         res = super(AcquirerMyFatoora, self)._get_feature_support()
@@ -50,9 +50,7 @@ class AcquirerMyFatoora(models.Model):
         #     }
         # else:
 
-        return {
-            'myfatoora_form_url': base_url + "shop/myfatoora/payment/"
-        }
+        return {'myfatoora_form_url': f"{base_url}shop/myfatoora/payment/"}
 
     def myfatoora_form_generate_values(self, values):
         currency = self.env['res.currency'].browse(values['currency_id'])
@@ -60,7 +58,7 @@ class AcquirerMyFatoora(models.Model):
         base_url = self.get_base_url()
         myfatoora_tx_values = dict(values)
         _logger.info(values.get('amount'))
-        myfatoora_tx_values.update({
+        myfatoora_tx_values |= {
             "InvoiceValue": values.get('amount'),
             "PaymentMethodId": 2,
             "CustomerName": partner.name,
@@ -77,11 +75,11 @@ class AcquirerMyFatoora(models.Model):
             "SendInvoiceOption": 1,
             "CallBackUrl": self.get_base_url(),
             "ErrorUrl": self.get_base_url(),
-            'return_url': '%s' % urljoin(base_url, '/payment/myfatoora/return'),
+            'return_url': f"{urljoin(base_url, '/payment/myfatoora/return')}",
             "Language": 1,
             "SourceInfo": "",
-            "Environment": self.state
-        })
+            "Environment": self.state,
+        }
 
         return myfatoora_tx_values
 
@@ -99,20 +97,20 @@ class AcquirerMyFatoora(models.Model):
             baseURL = "https://apitest.myfatoorah.com"
         provider = self.env['payment.acquirer'].sudo().search([('provider', '=', 'myfatoora')])
         token = provider.sudo().token
-        url = baseURL + "/v2/InitiatePayment"
+        url = f"{baseURL}/v2/InitiatePayment"
         payload = {
             "InvoiceAmount": 1,
             "CurrencyIso": self.env.company.currency_id.name
         }
         try:
-            headers = {'Content-Type': "application/json", 'Authorization': "bearer " + token}
+            headers = {
+                'Content-Type': "application/json",
+                'Authorization': f"bearer {token}",
+            }
             response = requests.request("POST", url, data=str(payload), headers=headers)
         except UserError as e:
             raise UserError(_(e))
-        if response:
-            return json.loads(response.text)
-        else:
-            return None
+        return json.loads(response.text) if response else None
 
     def _get_default_payment_method_id(self):
         self.ensure_one()
@@ -162,11 +160,8 @@ class PaymentTransaction(models.Model):
         # find tx -> @TDENOTE use txn_id ?
         txs = self.env['payment.transaction'].search([('reference', '=', reference)])
         if not txs or len(txs) > 1:
-            error_msg = 'MyFatoorah: received data for reference %s' % (reference)
-            if not txs:
-                error_msg += '; no order found'
-            else:
-                error_msg += '; multiple order found'
+            error_msg = f'MyFatoorah: received data for reference {reference}'
+            error_msg += '; multiple order found' if txs else '; no order found'
             _logger.info(error_msg)
             raise ValidationError(error_msg)
         return txs[0]
@@ -191,7 +186,7 @@ class PaymentTransaction(models.Model):
             transaction_id = transaction['TransactionId']
         if transaction_status == 'Succss':
             success_message = "Transaction Successfully Completed"
-            logger_msg = _('MyFatoorah:' + success_message)
+            logger_msg = _(f'MyFatoorah:{success_message}')
             _logger.info(logger_msg)
             self.write({
                 'acquirer_reference': transaction_id,
@@ -199,7 +194,7 @@ class PaymentTransaction(models.Model):
             self._set_done()
         elif transaction_status == 'InProgress':
             pending_message = "Transaction is Pending"
-            logger_msg = _('MyFatoorah:' + pending_message)
+            logger_msg = _(f'MyFatoorah:{pending_message}')
             _logger.info(logger_msg)
             self.write({
                 'acquirer_reference': transaction_id,
@@ -207,7 +202,7 @@ class PaymentTransaction(models.Model):
             self._set_pending()
         elif transaction_status == 'Failed':
             error_message = "Transaction Failed!!"
-            error = _('MyFatoorah:' + error_message)
+            error = _(f'MyFatoorah:{error_message}')
             _logger.info(error)
             self.write({'state_message': error})
             self._set_canceled()
